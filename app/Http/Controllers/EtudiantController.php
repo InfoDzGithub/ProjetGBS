@@ -8,56 +8,114 @@ use App\Etudiant;
 use App\Promot;
 use App\Groupe;
 use Excel;
-use App\Http\Controllers\Input;
+
+use App\User;
+use Illuminate\Support\Facades\Auth;
 
 
 class EtudiantController extends Controller
 {
+   public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
      public function create()
     { 
+      if( Auth::user()->type == 'AD'){
       $ps=Promot::all();
+      $userr = DB::table('users')
+           ->join('enseignants','enseignants.id','=','id_user')
+           ->where('enseignants.id',Auth::user()->id_user)
+           ->first();
 
         
          return view('admin.etudiant.create')->with([
+          'userr'=> $userr,
 
          'ps' => $ps]);
+         }
+            else{
+                 $ps=Promot::all();
+                return view('page.4042')->with([
+                
+                'ps' => $ps]);
+            }
         
     }
     public function edit($id)
     {
+      if( Auth::user()->type == 'AD'){
        $etudiant=Etudiant::find($id);
        $promots=Promot::all();
        $groupes=Groupe::all();
-        $ps=Promot::all();
+       $ps=Promot::all();
+       $userr = DB::table('users')
+         ->join('enseignants','enseignants.id','=','id_user')
+         ->where('enseignants.id',Auth::user()->id_user)
+         ->first();
+        //$idPro = $request->input('prm');
+          //$idPro=$id2;
+       //$idPro= Input::get ( 'prm' );
         
-        return view('admin.etudiant.edit')->with([
+        return view('admin.etudiant.details')->with([
             'etudiant' => $etudiant,
+            //'idPro' => $idPro,
             'promots' =>$promots,
             'groupes'=>$groupes,
+            "userr" => $userr,
             'ps' => $ps
        ]);
+        }
+            else{
+                 $ps=Promot::all();
+                return view('page.4042')->with([
+                
+                'ps' => $ps]);
+            }
     }
     /*********************************************/
         public function details($id)
     {
+      if( Auth::user()->type == 'AD'){
        $etudiant=Etudiant::find($id);
+        $userr = DB::table('users')
+         ->join('enseignants','enseignants.id','=','id_user')
+         ->where('enseignants.id',Auth::user()->id_user)
+         ->first();
+       if($etudiant==null){}
        $promots=Promot::all();
        $groupes=Groupe::all();
-        
+
+        //$idPro = $request->input('prm');
+          //$idPro=$id2;
+       //$idPro= Input::get ( 'prm' );
         $ps=Promot::all();
         
         return view('admin.etudiant.details')->with([
             'etudiant' => $etudiant,
+           // 'idPro' => $idPro,
             'promots' =>$promots,
             'groupes'=>$groupes,
             'ps' => $ps
        ]);
+      }
+            else{
+                 $ps=Promot::all();
+                return view('page.4042')->with([
+                
+                'ps' => $ps]);
+            }
     }
 /************************************************/
      public function update(Request $request , $id)
     {
+      if( Auth::user()->type == 'AD'){
        $etudiant = Etudiant::find($id);
-        
+        $userr = DB::table('users')
+           ->join('enseignants','enseignants.id','=','id_user')
+           ->where('enseignants.id',Auth::user()->id_user)
+           ->first();
          $ps=Promot::all();
              
            if($request->hasFile('img')){
@@ -76,6 +134,7 @@ class EtudiantController extends Controller
             $etudiant->dateN = $request->input('date_naissance');
             $etudiant->address = $request->input('address');
             $etudiant->groupes_id = $request->input('groupe');
+            $etudiant->etat = $request->input('etat');
             $etudiant->photo = 'uploads/photo/'.$file_name;
            
             $etudiant->save();
@@ -84,46 +143,73 @@ class EtudiantController extends Controller
             
 
         return redirect('etudiant/'.$id.'/details')->with([
+          "userr" => $userr,
 
          'ps' => $ps]);
+        }
+            else{
+                 $ps=Promot::all();
+                return view('page.4042')->with([
+                
+                'ps' => $ps]);
+            }
 
     }
   /*************************************************/
    public function destroy($id)
     {
-        
+        if( Auth::user()->type == 'AD'){
         $etudiant = Etudiant::find($id);
-             
+           
         $etudiant->delete();
-        return back();
-            //}
+        return redirect('promot');
+          }
+            else{
+                 $ps=Promot::all();
+                return view('page.4042')->with([
+                
+                'ps' => $ps]);
+            }
+
     }
    
  
 /****************************************************/
  public function store(Request $request)
     {
-        /*$this->validate($request,
-            ['select_file' => 'required|mimes:xls,xlsx']);*/
+if( Auth::user()->type == 'AD'){
+        $this->validate($request,
+            ['select_file' => 'required|mimes:xls,xlsx']);
+
+        $imgname = $request->file('select_img')->getClientOriginalName();
+        $request->file('select_img')->move(public_path('/uploads/photo'),$imgname);
         $path=$request->file('select_file')->getRealPath();
         $data= Excel::load($path)->get();
         if($data->count() > 0)
         {
             foreach($data->toArray() as $key =>$value)
             {
-                foreach($value as $row)
-                {
+                //foreach($value as $row){
                     $insert_data[]=array(
-                        'nom' => $row['nom'],
-                        'prenom' => $row['prenom'],
-                        'dateN' => $row['date_naissance'],
-                        'address' => $row['address'],
-                        'email' => $row['email'],
-                        'password' => $row['password'],
-                        'groupes_id' => $row['grp_id'],
-                        'photo' => $row['photo']
+                        'nom' => $value['nom'],
+                        'prenom' => $value['prenom'],
+                        'dateN' => $value['date_naissance'],
+                        'address' => $value['address'],
+                        'email' => $value['email'],
+                        'password' => $value['password'],
+                        'groupes_id' => $value['groupe'],
+                        'photo' => 'uploads/photo/'.$value['photo']
                         );
-                }
+                    $groupe=DB::table('groupes')
+                    ->where('groupes.nomGroup', '=',$value['groupe'])
+                    ->get();
+                    if($groupe==null){
+                      $Groupes = new Groupe();
+                      $Groupes->nomGroup = $value['groupe'];
+                      $Groupes->save();
+
+                    }
+                //}
             }
             if(!empty($insert_data))
             {
@@ -131,7 +217,14 @@ class EtudiantController extends Controller
             }
         }
            
-        return back()->with('success','Excel Data Imported successufuly');
+        return redirect('promot')->with('success','Excel Data Imported successufuly');
+}
+            else{
+                 $ps=Promot::all();
+                return view('page.4042')->with([
+                
+                'ps' => $ps]);
+            }
 
     }
 }
