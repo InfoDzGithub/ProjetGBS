@@ -11,73 +11,155 @@ use App\Http\Requests\EditRequest;
 use Illuminate\Http\UploadedFile;
 use App\Enseignant;
 use App\Examen;
+use App\Examensetd;
 use App\Matiere;
 use App\Promot;
-use App\Paquet;
+use App\Exclusion;
+use App\User;
+use Illuminate\Support\Facades\Auth;
 class ExamenController extends Controller
 {
-
+ public function __construct()
+    {
+        $this->middleware('auth');
+    }
 	 
 /**********************************************************/
     public function create($id)
     {
-        $matieres = Matiere::all();
+         if( Auth::user()->type == 'AD'){
+        
+       $userr = DB::table('users')
+       ->join('enseignants','enseignants.id','=','id_user')
+       ->where('enseignants.id',Auth::user()->id_user)
+       ->first();
+         $matieres = Matiere::all();
         $idMatiere=$id;
         $ps=Promot::all();
+        $exclus=DB::table('etudiants')
+                ->select( DB::raw('etudiants.id,nom,prenom,dateN,address,email,password,groupes_id,grp_ens_mods.type,etat,photo,etudiants.created_at,etudiants.updated_at'))
+              ->join('exclusions','etudiants.id','=','idE')
+              ->join('grp_ens_mods','grp_ens_mods.id','=','gem_id')
+              ->join('enseignant_matieres','enseignant_matieres.id','=','Ens_mod_id')
+              ->where('Matieres_id',$id)
+                ->orderby('nom','asc')
+                ->get();
          return view('admin.examen.create')->with([
             'matieres' => $matieres,
             'idMatiere'=>$idMatiere,
+            'exclus'=>$exclus,
+            'userr' => $userr,
             'ps' => $ps
             
         ]);
+       
+        }
+        else{
+             $ps=Promot::all();
+            return view('page.4042')->with([
+            
+            'ps' => $ps]);
+        }
+       
     	
     }
    /**********************************************/
     public function store(Request $request,$id)
     {
-        $examen = new Examen();
+        
+       if( Auth::user()->type == 'AD'){
+        
+       $userr = DB::table('users')
+       ->join('enseignants','enseignants.id','=','id_user')
+       ->where('enseignants.id',Auth::user()->id_user)
+       ->first();
+         $etd=DB::table('etudiants')
+                ->select( DB::raw('etudiants.id'))
+                ->get();
+                $examen = new Examen();
+                        if($request->hasFile('sujet')){
+
+                            $file = $request->file('sujet');
+
+                            $file_name = time().'.'.$file->getClientOriginalExtension();
+                            $file->move(public_path('/download'),$file_name);
+                            $examen->sujet = $file_name;
+
+                        }
+                        else  $examen->sujet = 'cpc.pdf';
+
+                            $examen->titre = $request->input('titre');
+                            $examen->date_examen = $request->input('date_examen');
+                            $examen->type = $request->input('type');
+                            $examen->matieres_id = $id;
+                            
+
+                            $examen->save(); 
+                    
+                foreach ($etd as $T ) {
+                    # code...
+                    if(!(Exclusion::where([['idE','=',$T->id],['Matieres_id','=',$id]])
+              ->join('grp_ens_mods','grp_ens_mods.id','=','gem_id')
+              ->join('enseignant_matieres','enseignant_matieres.id','=','Ens_mod_id')->exists()))
+                    {
+                         $ExEtd = new Examensetd();
+                       
+                            $ExEtd->idE = $T->id;
+                            $ExEtd->idEx = $examen->id;
+
+                            $ExEtd->save(); 
+                    }
+                  
+                }
           
-            if($request->hasFile('sujet')){
-
-            $file = $request->file('sujet');
-
-            $file_name = time().'.'.$file->getClientOriginalExtension();
-            $file->move(public_path('/download'),$file_name);
-            $examen->sujet = $file_name;
-
-        }
-        else  $examen->sujet = 'cpc.pdf';
-
-            $examen->titre = $request->input('titre');
-            $examen->date_examen = $request->input('date_examen');
-            $examen->type = $request->input('type');
-            $examen->matieres_id = $id;
-            $examen->save();
-            $paquet=new Paquet();
-            $paquet->examens_id=$examen->id;
-            $paquet->save();
-			
-
          
         return redirect('matiere/'.$id.'/details');
+        
+        }
+        else{
+             $ps=Promot::all();
+            return view('page.4042')->with([
+            
+            'ps' => $ps]);
+        }
+       
 
     }
  /*****************************************************************/
  public function destroy($id)
     {
+        if( Auth::user()->type == 'AD'){
         
+       $userr = DB::table('users')
+       ->join('enseignants','enseignants.id','=','id_user')
+       ->where('enseignants.id',Auth::user()->id_user)
+       ->first();
         $examen = Examen::find($id);
        $idMatiere=$examen->matieres_id;
-       $paquet=Paquet::where('examens_id','=',$id);
-       $paquet->delete();
+       
         $examen->delete();
         return redirect('matiere/'.$idMatiere.'/details');
+        
+        }
+        else{
+             $ps=Promot::all();
+            return view('page.4042')->with([
+            
+            'ps' => $ps]);
+        }
+        
             //}
     }
   /**********************************************************/
 public function edit($id)
     {
-    $examen = Examen::find($id);
+        if( Auth::user()->type == 'AD'){
+        
+       $userr = DB::table('users')
+       ->join('enseignants','enseignants.id','=','id_user')
+       ->where('enseignants.id',Auth::user()->id_user)
+       ->first();
+         $examen = Examen::find($id);
     $matieres=Matiere::all();
     $matInfo = DB::table('examens')
                    ->join('matieres', 'matieres.id', '=', 'examens.matieres_id')
@@ -89,10 +171,20 @@ public function edit($id)
             'examen' => $examen,
             'matInfo'=>$matInfo,
             'matieres'=>$matieres,
+            'userr' => $userr,
            'ps' => $ps
 
             
         ]);
+        
+        }
+        else{
+             $ps=Promot::all();
+            return view('page.4042')->with([
+            
+            'ps' => $ps]);
+        }
+   
        
             
         
@@ -101,7 +193,14 @@ public function edit($id)
     /******************************************************/
 public function update(Request $request , $id)
     {
-       $examen = Examen::find($id);
+        if( Auth::user()->type == 'AD'){
+        
+       $userr = DB::table('users')
+       ->join('enseignants','enseignants.id','=','id_user')
+       ->where('enseignants.id',Auth::user()->id_user)
+       ->first();
+        
+         $examen = Examen::find($id);
 
              if($request->hasFile('sujet')){
 
@@ -119,31 +218,47 @@ public function update(Request $request , $id)
             $examen->type = $request->input('type');
             $examen->matieres_id = $request->input('matiere');;
 
-			$examen->save();
+            $examen->save();
 
         return redirect('matiere/'.$examen->matieres_id.'/details');
+        }
+        else{
+             $ps=Promot::all();
+            return view('page.4042')->with([
+            
+            'ps' => $ps]);
+        }
+      
 
     }
-/*******************************************************************
-public function getDownload($id)
-{
 
-    //PDF file is stored under project/public/download/info.pdf
-
-    $file= public_path(). "/download/cpc.pdf";
-
- 
-
-    $headers = array(
-
-              'Content-Type: application/pdf',
-
-            );
-//Response::download($file, 'filename.pdf', $headers);
- 
-$download = response()->download($file, 'filename.pdf', $headers);
-          return redirect('matiere/'.$id.'/details');
-
-}*/
-
+     public function details($id)
+    {
+        if( Auth::user()->type == 'AD'){
+        
+       $userr = DB::table('users')
+       ->join('enseignants','enseignants.id','=','id_user')
+       ->where('enseignants.id',Auth::user()->id_user)
+       ->first();
+        $examen = Examen::where('examens.id','=',$id)->join('matieres','matieres.id','=','matieres_id')->first();
+        $liste = Examensetd::where('idEx','=',$id)
+                 ->join('etudiants','etudiants.id','=','idE')
+                 ->get();
+          $ps=Promot::all();
+        return view('admin.examen.detial')->with([
+            'examen' => $examen,
+            'lists' => $liste,
+            'userr' => $userr,
+            'ps' => $ps
+       ]);
+        
+        }
+        else{
+             $ps=Promot::all();
+            return view('page.4042')->with([
+            
+            'ps' => $ps]);
+        }
+        
+    } 
 }
