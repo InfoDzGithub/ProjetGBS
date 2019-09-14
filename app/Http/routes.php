@@ -62,6 +62,7 @@ Route::get('CorrectionPaquet/{id}','paquetController@Pcorrection');
 Route::get('affectation/{idE}','paquetController@affectation');
 Route::get('CorrectionPaquet/{idP}/{idE}','paquetController@correction');
 Route::post('affecter/{idE}','paquetController@store');
+Route::get('note/{idP}/{idE}','paquetController@note');
 
 
 
