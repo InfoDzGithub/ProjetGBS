@@ -7,6 +7,13 @@
     <title>@yield('title')</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+@yield('linkcss')
+
+   
+    
+
+
+
     <!-- favicon
         ============================================ -->
     <link rel="shortcut icon" type="image/x-icon" href="{{asset('frontEnd')}}/img/favicon.ico">
@@ -34,9 +41,20 @@
     <!-- modals CSS
         ============================================ -->
     <link rel="stylesheet" href="{{asset('frontEnd')}}/css/modals.css">
+     <!-- charts CSS
+        ============================================ -->
+    <link rel="stylesheet" href="{{asset('frontEnd')}}/css/c3.min.css">
+     <!-- tabs CSS
+        ============================================ -->
+    <link rel="stylesheet" href="{{asset('frontEnd')}}/css/tabs.css">
     <!-- normalize CSS
         ============================================ -->
     <link rel="stylesheet" href="{{asset('frontEnd')}}/css/normalize.css">
+     <link rel="stylesheet" href="{{asset('frontEnd')}}/css/jvectormap/jquery-jvectormap-2.0.3.css">
+    <!-- normalize CSS
+    ============================================ -->
+    <link rel="stylesheet" href="{{asset('frontEnd')}}/css/data-table/bootstrap-table.css">
+    <link rel="stylesheet" href="{{asset('frontEnd')}}/css/data-table/bootstrap-editable.css">
     <!-- forms CSS
         ============================================ -->
     <link rel="stylesheet" href="{{asset('frontEnd')}}/css/form/all-type-forms.css">
@@ -46,10 +64,8 @@
     <!-- responsive CSS
         ============================================ -->
     <link rel="stylesheet" href="{{asset('frontEnd')}}/css/responsive.css">
-    <!-- modernizr JS
-        ============================================ -->
-         <!-- select2 CSS
-        ============================================ -->
+   <!-- select2 CSS
+       ============================================ -->
     <link rel="stylesheet" href="{{asset('frontEnd')}}/css/select2/select2.min.css">
     <!-- chosen CSS
         ============================================ -->
@@ -63,14 +79,16 @@
         <link rel="stylesheet" href="{{asset('frontEnd')}}/css/ace.min.css" class="ace-main-stylesheet" id="main-ace-style" />
         <link rel="stylesheet" href="{{asset('frontEnd')}}/css/ace-skins.min.css" />
         <link rel="stylesheet" href="{{asset('frontEnd')}}/css/ace-rtl.min.css" />
+         <link rel="stylesheet" href="css/c3.min.css">
+    
+    <!-- modernizr JS-->
+    <script src="{{asset('frontEnd')}}/js/vendor/modernizr-2.8.3.min.js"></script>
+    <link rel="stylesheet" href="{{asset('frontEnd')}}/css/style.css">
 
         <script src="{{asset('frontEnd')}}/js/ace-extra.min.js"></script>
     <link rel="shortcut icon" type="image/x-icon" href="{{asset('frontEnd')}}/img/favicon.ico">
-    <!-- Google Fonts
-        ============================================ -->
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i,800" rel="stylesheet">
     @yield('cssHeader') 
-    <script src="{{asset('frontEnd')}}/js/vendor/modernizr-2.8.3.min.js"></script>
+   
 </head>
 <!--===================================================-->
 
@@ -80,15 +98,88 @@
   <div class="left-sidebar-pro">
     <nav id="sidebar">
       <div class="sidebar-header">
-                    <a href="#"><img src="{{asset('frontEnd')}}/img/message/1.jpg" alt="" />
+                    <a href="#"><img src="{{asset($userr->photo)}}" style="width: 100px;"alt="" />
                     </a>
-                    <h3>Andrar Son</h3>
-                    <p>Developer</p>
-                    <strong>AP+</strong>
+                    <h3> {{ Auth::user()->name }}</h3>
+                    <p>{{ Auth::user()->type }}</p>
+                    <strong>LG²</strong>
       </div>
       <div class="left-custom-menu-adp-wrap">
-         @yield('asidebar')
-                   
+         <!--@yield('asidebar')-->
+        
+          <ul class="nav navbar-nav left-sidebar-menu-pro">
+              <li class="nav-item">
+                  <a href="#" data-toggle="dropdown" role="button" aria-expanded="false" class="nav-link dropdown-toggle"><i class="fa big-icon fa-home"></i> <span class="mini-dn">Home</span> </a>
+                 
+              </li>
+              <li class="nav-item"><a href="{{url('/profil') }}" aria-expanded="false" class="nav-link dropdown-toggle"><i class="fa big-icon fa-user"></i> <span class="mini-dn">Profil</span> </a>
+                 
+              </li>
+              @if ( Auth::user()->type =='EN' || Auth::user()->type =='ER')
+              <li class="nav-item">
+                <a href="{{url('MarquerAbsence/'.$userr->id_user) }} " aria-expanded="false" class="nav-link dropdown-toggle">
+                  <i class="fa big-icon fa-calendar-check-o">
+                    
+                  </i>
+                   <span class="mini-dn">Marquer absence</span> 
+                 </a>
+               </li>
+               <li class="nav-item"><a href="#" data-toggle="dropdown" role="button" aria-expanded="false" class="nav-link dropdown-toggle"><i class="fa big-icon fa-pencil-square-o"></i> <span class="mini-dn">correction</span> <span class="indicator-right-menu mini-dn"><i class="fa indicator-mn fa-angle-left"></i></span></a>
+                  <div role="menu" class="dropdown-menu left-menu-dropdown animated flipInX">
+                  @foreach($ps as $p)
+                      <a href="{{url('CorrectionPaquet') }}" class="dropdown-item">
+                      {{$p->filiere}} {{$p->annee}} 
+                      </a>
+                      
+                  @endforeach
+                     
+                  </div>
+              </li>
+                @endif 
+                @if ( Auth::user()->type =='AD') 
+
+              <li class="nav-item"><a href="#" data-toggle="dropdown" role="button" aria-expanded="false" class="nav-link dropdown-toggle"><i class="fa big-icon fa-pencil-square-o"></i> <span class="mini-dn">Compte utilisateur</span> <span class="indicator-right-menu mini-dn"><i class="fa indicator-mn fa-angle-left"></i></span></a>
+                  <div role="menu" class="dropdown-menu left-menu-dropdown animated flipInX">
+                      <a href="{{url('ResponsableCodage') }}" class="dropdown-item">Responsables de codage</a>
+                      <a href="{{url('/profil') }}" class="dropdown-item">Admin</a>
+                      <a href="{{url('enseignant') }}" class="dropdown-item">Enseignants</a>
+
+                  </div>
+              </li>
+             <!--  <li class="nav-item"><a href="{{url('matiere')}}" data-toggle="dropdown" role="button" aria-expanded="false" class="nav-link dropdown-toggle"> <i class="fa fa-group"></i>  <span class="mini-dn">Groupe</span> </a></li>
+              <li class="nav-item"><a href="{{url('matiere')}}" data-toggle="dropdown" role="button" aria-expanded="false" class="nav-link dropdown-toggle"><i class="fa fa-newspaper-o"></i> <span class="mini-dn">Matiere</span> </a></li>-->
+              <li class="nav-item"><a href="#" data-toggle="dropdown" role="button" aria-expanded="false" class="nav-link dropdown-toggle"><i class="fa fa-list"></i>  <span class="mini-dn">Promo</span> <span class="indicator-right-menu mini-dn"><i class="fa indicator-mn fa-angle-left"></i></span></a>
+                  <div role="menu" class="dropdown-menu left-menu-dropdown animated flipInX">
+                  @foreach($ps as $p)
+                      <a href="{{url('promot') }}" class="dropdown-item">
+                      {{$p->filiere}} {{$p->annee}} 
+                      </a>
+                      
+                  @endforeach
+                      <a href="{{url('promot/create')}}" class="dropdown-item">nouvel promo</a>
+                  </div>
+              </li>
+              @endif
+               @if ( Auth::user()->type =='RC') 
+
+            
+              <li class="nav-item"><a href="#" data-toggle="dropdown" role="button" aria-expanded="false" class="nav-link dropdown-toggle"><i class="fa fa-list"></i>  <span class="mini-dn">codage</span> <span class="indicator-right-menu mini-dn"><i class="fa indicator-mn fa-angle-left"></i></span></a>
+                  <div role="menu" class="dropdown-menu left-menu-dropdown animated flipInX">
+                  @foreach($ps as $p)
+                      <a href="{{url('codage') }}" class="dropdown-item">
+                      {{$p->filiere}} {{$p->annee}} 
+                      </a>
+                      
+                  @endforeach
+                  </div>
+              </li>
+              @endif
+
+              <li class="nav-item"><a href="paramtre.html" data-toggle="dropdown" role="button" aria-expanded="false" class="nav-link dropdown-toggle"><i class="fa big-icon  fa-wrench"></i> <span class="mini-dn">paramtre</span> </a>
+                  
+              </li>
+          </ul>
+                  
       </div>
     </nav>
  </div>
@@ -247,7 +338,7 @@
                                                 </li>
                                                 <li><a href="#"><span class="adminpro-icon adminpro-settings author-log-ic"></span>Settings</a>
                                                 </li>
-                                                <li><a href="#"><span class="adminpro-icon adminpro-locked author-log-ic"></span>Log Out</a>
+                                                <li><a href="{{ url('/logout') }}"><span class="adminpro-icon adminpro-locked author-log-ic"></span>Log Out</a>
                                                 </li>
              </ul>
        </li>
@@ -932,9 +1023,19 @@
         </div>
     </div>
     @yield('ChatBox')
+
+    @yield('linkJS')
+
     <!-- Footer End-->
-<!--==================================================-->
-    <script src="{{asset('frontEnd')}}/js/vendor/jquery-1.11.3.min.js"></script>
+
+  
+   
+   
+   
+     
+   
+   <script src="{{asset('frontEnd')}}/js/vendor/jquery-1.11.3.min.js"></script>
+
     <!-- bootstrap JS
         ============================================ -->
     <script src="{{asset('frontEnd')}}/js/bootstrap.min.js"></script>
@@ -958,6 +1059,17 @@
         ============================================ -->
     <script src="{{asset('frontEnd')}}/js/counterup/jquery.counterup.min.js"></script>
     <script src="{{asset('frontEnd')}}/js/counterup/waypoints.min.js"></script>
+     <!-- peity JS
+        ============================================ -->
+    <script src="{{asset('frontEnd')}}/js/peity/jquery.peity.min.js"></script>
+    <script src="{{asset('frontEnd')}}/js/peity/peity-active.js"></script>
+      <!-- sparkline JS
+        ============================================ -->
+    <script src="{{asset('frontEnd')}}/js/sparkline/jquery.sparkline.min.js"></script>
+    <script src="{{asset('frontEnd')}}/js/sparkline/sparkline-active.js"></script>
+    <!--==================================================-->
+
+   
     <!-- modal JS
         ============================================ -->
     <script src="{{asset('frontEnd')}}/js/modal-active.js"></script>
@@ -975,7 +1087,6 @@
     <script src="{{asset('frontEnd')}}/js/select2/select2-active.js"></script>
     <!-- main JS
         ============================================ -->
-    <script src="{{asset('frontEnd')}}/js/main.js"></script>
     <!--ce script est ajouté pr que le champ multiple fonctionne-->
     <script type="text/javascript">
         $(".select2").select2({
